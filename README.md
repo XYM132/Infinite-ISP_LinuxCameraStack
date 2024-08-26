@@ -26,11 +26,11 @@ The **Infinite-ISP Linux-Based Camera Stack** is an open-source platform for cam
 
 It consists of three main components:
 
-* **Custom Camera Applications:** Built an application using libcamera framework capable of capturing single and multiple consecutive frames.
+* [Custom Camera Applications](/Camera%20Application/burst_cam_application/): Built an application using libcamera framework capable of capturing single and multiple consecutive frames.
 
-* **Infinite-ISP Driver:** The driver is currently under development and we are seeking open-source contributions for writing this driver.
+* [Infinite-ISP Driver](/Infinite-ISP%20Driver/): The driver is currently under development and we are seeking open-source contributions for writing this driver.
 
-* **FPGA Implementation:** Implemented Infinite-ISP on FPGA of Xilinx® Kria KV260’s XCK26 Zynq UltraScale + MPSoC.
+* FPGA Implementation: Implemented Infinite-ISP on FPGA of Xilinx® Kria KV260’s XCK26 Zynq UltraScale + MPSoC.
 
 Together, these components enable any libcamera-based camera application to operate on the Infinite-ISP FPGA hardware using Linux.  
 
