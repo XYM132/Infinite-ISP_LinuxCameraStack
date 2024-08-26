@@ -20,19 +20,27 @@ Infinite-ISP is a full-stack ISP development platform designed for all aspects o
 
 # Infinite-ISP Linux Based Camera Stack
 ## Overview
-The **Infinite-ISP Linux-Based Camera Stack** is an open-source platform for camera application development on Linux, leveraging the ***libcamera*** framework for custom camera applications in user space. It utilizes the Infinite-ISP on the Xilinx Kria KV260's XCK Zynq UltraScale+ MPSoC.
+The **Infinite-ISP Linux-Based Camera Stack** is an open-source platform with the primary goal of providing a complete stack for camera software development. It aims to utilize the Infinite-ISP as an image processing pipeline on the FPGA through Linux and leverage the ***libcamera*** framework for custom camera application development in user space. This approach will enable the Infinite-ISP on the FPGA to offer greater flexibility, scalability, and ease of development.
+
 
 **Note:** This project is currently under development and is open for contributions.
 
-It consists of three main components:
+Developing a camera stack involves several steps, such as creating custom camera applications, implementing the hardware ISP on the FPGA, and establishing the interface between hardware and software layers through Linux. Some of these steps have already been accomplished, while others are still in progress:
 
-* [Custom Camera Applications](/Camera%20Application/burst_cam_application/): Built an application using libcamera framework capable of capturing single and multiple consecutive frames.
+## Accomplished
+* [Custom Camera Applications](/Camera%20Application/burst_cam_application/): A custom camera application has been developed using the libcamera framework that is capable of capturing and processing single and multiple consective frames in user space.
 
-* [Infinite-ISP Driver](/Infinite-ISP%20Driver/): The driver is currently under development and we are seeking open-source contributions for writing this driver.
+* [FPGA Implementation](https://github.com/10x-Engineers/Infinite-ISP_FPGA_XCK26): The Infinite-ISP has been successfully implemented on the FPGA of the Xilinx® Kria KV260's XCK26 Zynq UltraScale + MPSoC.
 
-* FPGA Implementation: Implemented Infinite-ISP on FPGA of Xilinx® Kria KV260’s XCK26 Zynq UltraScale + MPSoC.
+## Under Development
 
-Together, these components enable any libcamera-based camera application to operate on the Infinite-ISP FPGA hardware using Linux.  
+### [Infinite-ISP Driver](/Infinite-ISP%20Driver/)
+The driver is currently under development, and we are seeking open-source contributions to assist in its creation.
+
+* Integrate the Infinite-ISP into the Linux operating system as a module.
+* Develop the driver for Infinite-ISP to enable seamless communication between the hardware and software layers.
+
+Together, all these components enable any libcamera-based camera application to operate on the Infinite-ISP FPGA hardware using Linux.  
 
 ## License 
 This project is licensed under Apache 2.0 (see [LICENSE](LICENSE) file).
