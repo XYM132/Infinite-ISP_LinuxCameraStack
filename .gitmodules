@@ -1,0 +1,3 @@
+[submodule "Camera Application/petalinux_kria"]
+	path = Camera Application/petalinux_kria
+	url = https://github.com/10x-Engineers/petalinux_kria.git
