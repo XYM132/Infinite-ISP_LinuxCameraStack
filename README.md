@@ -35,14 +35,18 @@ Developing a camera stack involves several steps, such as creating custom camera
 ## Under Development
 
 ### [Infinite-ISP Driver](/Infinite-ISP%20Driver/)
-The driver is currently under development, and we are seeking open-source contributions to assist in its creation.
+The driver is currently under development, and we are seeking open-source contributions to assist in its creation. There are two issues related to this that need to be addressed. 
 
-* Integrate the Infinite-ISP into the Linux operating system as a module.
-* Develop the driver for Infinite-ISP to enable seamless communication between the hardware and software layers.
+* Issue # 1: Integrate the Infinite-ISP into the Linux operating system as a module.
+* Issue # 2: Develop the driver for Infinite-ISP to enable seamless communication between the hardware and software layers.
 
 Together, all these components enable any libcamera-based camera application to operate on the Infinite-ISP FPGA hardware using Linux.  
+
 ## How to Contribute
- 
+**Want to help develop the driver for Infinite-ISP?**
+
+Dive into the [Ininite-ISP Driver](/Infinite-ISP%20Driver/) directory, where you'll find all the materials related to the challenges we're tackling. The [README](/Infinite-ISP%20Driver/README.md) file provides a step-by-step guide on how you can use these resources and start contributing. Your expertise and creativity are welcome! 
+
 ## License 
 This project is licensed under Apache 2.0 (see [LICENSE](LICENSE) file).
 
