@@ -41,7 +41,8 @@ The driver is currently under development, and we are seeking open-source contri
 * Develop the driver for Infinite-ISP to enable seamless communication between the hardware and software layers.
 
 Together, all these components enable any libcamera-based camera application to operate on the Infinite-ISP FPGA hardware using Linux.  
-
+## How to Contribute
+ 
 ## License 
 This project is licensed under Apache 2.0 (see [LICENSE](LICENSE) file).
 
