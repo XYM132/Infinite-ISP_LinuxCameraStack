@@ -25,7 +25,7 @@ The **Infinite-ISP Linux-Based Camera Stack** is an open-source platform with th
 
 **Note:** This project is currently under development and is open for contributions.
 
-Developing a camera stack involves several steps, such as creating custom camera applications, implementing the hardware ISP on the FPGA, and establishing the interface between hardware and software layers through Linux. Some of these steps have already been accomplished, while others are still in progress:
+Developing a camera stack can be divided into several steps, such as creating custom camera applications, implementing the hardware ISP on the FPGA, and establishing the interface between hardware and software layers through Linux. Some of these steps have already been accomplished, while others are still in progress.
 
 ## Accomplished
 * [Custom Camera Applications](/Camera%20Application/burst_cam_application/): A custom camera application has been developed using the libcamera framework that is capable of capturing and processing single and multiple consective frames in user space.
@@ -34,8 +34,8 @@ Developing a camera stack involves several steps, such as creating custom camera
 
 ## Under Development
 
-### [Infinite-ISP Driver](/Infinite-ISP%20Driver/)
-The driver is currently under development, and we are seeking open-source contributions to assist in its creation. There are two issues related to this that need to be addressed. 
+### Add Linux Support
+Adding Linux support is currently under development, and we are seeking open-source contributions to assist in its effort. There are two issues related to this that need to be addressed. 
 
 * Issue # 1: Integrate the Infinite-ISP into the Linux operating system as a module.
 * Issue # 2: Develop the driver for Infinite-ISP to enable seamless communication between the hardware and software layers.
@@ -45,7 +45,7 @@ Together, all these components enable any libcamera-based camera application to 
 ## How to Contribute
 **Want to help develop the driver for Infinite-ISP?**
 
-Dive into the [Ininite-ISP Driver](/Infinite-ISP%20Driver/) directory, where you'll find all the materials related to the challenges we're tackling. The [README](/Infinite-ISP%20Driver/README.md) file provides a step-by-step guide on how you can use these resources and start contributing. Your expertise and creativity are welcome! 
+Dive into the [Linux Support](/Linux%20Support/) directory, where you'll find all the materials related to the challenges we're tackling. The [README](/Linux%20Support/README.md) file provides a step-by-step guide on how you can use these resources and start contributing. Your expertise and creativity are welcome! 
 
 ## License 
 This project is licensed under Apache 2.0 (see [LICENSE](LICENSE) file).
