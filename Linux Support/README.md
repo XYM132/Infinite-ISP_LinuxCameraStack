@@ -67,6 +67,12 @@ If the following modules appear as result of last command shown in the figure be
 
 ![](/Linux%20Support/resources/PL-Modules.png)
 
+##  Contributing to Developing Driver for Infinite-ISP
+In the reference project, the ISP_Lite driver (both [.h](https://github.com/bxinquan/zynqmp_cam_isp_demo_linux/blob/main/linux-xlnx-xilinx-v2022.1/include/uapi/linux/xil-isp-lite.h) and [.c](https://github.com/bxinquan/zynqmp_cam_isp_demo_linux/blob/main/linux-xlnx-xilinx-v2022.1/drivers/media/platform/xilinx/xil-isp-lite.c) files) has been developed and embedded into the kernel image. This driver not only manages communication between ISP_Lite modules but also includes support for V4L2, which is essential. Therefore, one of the best approaches to developing an Infinite-ISP driver is to modify the existing ISP_Lite driver rather than starting from scratch. For this task, we have the necessary [register map](/Linux%20Support/resources/Infinite-ISP%20Register%20Map.xlsx) and [hardware design](/Linux%20Support/resources/design_1_wrapper.xsa) files available.
+
+
+For testing, after developing the driver, it will need to be loaded into PetaLinux, either dynamically or by compiling it into the kernel image.
+
 ## License 
 This project is licensed under Apache 2.0 (see [LICENSE](LICENSE) file).
 
