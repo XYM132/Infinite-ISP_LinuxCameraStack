@@ -65,6 +65,8 @@ There are multiple ways to generate the pl.dtsi file. In our case, we have gener
     ```
 If the following modules appear as result of last command shown in the figure below, then the pl.dtbo has been generated correctly.
 
+![](/Linux%20Support/resources/PL-Modules.png)
+
 ## License 
 This project is licensed under Apache 2.0 (see [LICENSE](LICENSE) file).
 
