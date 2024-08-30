@@ -37,8 +37,8 @@ Developing a camera stack can be divided into several steps, such as creating cu
 ### Add Linux Support
 Adding Linux support is currently under development, and we are seeking open-source contributions to assist in its effort. There are two issues related to this that need to be addressed. 
 
-* Issue # 1: Integrate the Infinite-ISP into the Linux operating system as a module.
-* Issue # 2: Develop the driver for Infinite-ISP to enable seamless communication between the hardware and software layers.
+* [Issue](https://github.com/10x-Engineers/Infinite-ISP_LinuxCameraStack/issues/2): Integrate the Infinite-ISP into the Linux operating system as a module.
+* [Issue](https://github.com/10x-Engineers/Infinite-ISP_LinuxCameraStack/issues/4): Develop the driver for Infinite-ISP to enable seamless communication between the hardware and software layers.
 
 Together, all these components enable any libcamera-based camera application to operate on the Infinite-ISP FPGA hardware using Linux.  
 
