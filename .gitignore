@@ -1,0 +1,8 @@
+Linux_drivers/linux_headers/
+Linux_drivers/*.cmd
+Linux_drivers/*.o
+Linux_drivers/*.ko
+Linux_drivers/*.mod*
+Linux_drivers/*.dtbo
+Linux_drivers/Module.symvers
+Linux_drivers/modules.order
