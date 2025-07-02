@@ -23,9 +23,11 @@ obj-m += mipi-rx-to-video.o
 obj-m += ar1335.o
 
 # Device Tree files
-DTS_FILE := zynqmp-cam-isp-demo-pl.dtsi
+DTS_FILE := pl.dtsi
 DTBO_FILE := $(DTS_FILE:.dtsi=.dtbo)
 DTC_FLAGS ?= -@ -O dtb
+
+BIT_STREAM_FILE := design_1_wrapper.bit.bin
 
 # Default target
 all: modules dtbo
@@ -47,7 +49,7 @@ clean:
 	rm -f *.dtbo
 
 # Installation targets (ARM64 only)
-install: check_arch install_modules install_dtbo
+install: check_arch install_bitstream install_modules install_dtbo
 
 install_modules: modules
 	insmod xil-isp-lite.ko
@@ -59,7 +61,10 @@ install_dtbo: dtbo
 	-rmdir /sys/kernel/config/device-tree/overlays/*
 	mkdir /sys/kernel/config/device-tree/overlays/Infinite_ISP
 	echo 0 > /sys/class/fpga_manager/fpga0/flags
-	cat ./zynqmp-cam-isp-demo-pl.dtbo >/sys/kernel/config/device-tree/overlays/Infinite_ISP/dtbo
+	cat $(DTBO_FILE) > /sys/kernel/config/device-tree/overlays/Infinite_ISP/dtbo
+
+install_bitstream: $(BIT_STREAM_FILE)
+	install -C -m 644 $(BIT_STREAM_FILE) /lib/firmware/
 
 uninstall: check_arch
 	rmmod xil-isp-lite xil-vip mipi-rx-to-video ar1335 || true
@@ -79,4 +84,4 @@ ifneq ($(UNAME_M),aarch64)
 	$(error This target can only be run on aarch64 architecture)
 endif
 
-.PHONY: all modules dtbo clean install install_modules install_dtbo uninstall check_arch check_root
+.PHONY: all modules dtbo clean install install_modules install_dtbo install_bitstream uninstall check_arch check_root
