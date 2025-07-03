@@ -70,6 +70,7 @@
 				compatible = "xlnx,axi-intc-4.1", "xlnx,xps-intc-1.00.a";
 				interrupt-controller ;
 				interrupt-parent = <&gic>;
+				interrupts = <0 89 4>;
 				reg = <0x0 0xa0010000 0x0 0x10000>;
 				xlnx,kind-of-intr = <0x0>;
 				xlnx,num-intr-inputs = <0xc>;
