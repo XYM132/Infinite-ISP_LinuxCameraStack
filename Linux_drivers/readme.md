@@ -70,6 +70,51 @@ sudo make install
 
 
 
+## Capturing Images From IMX219
+
+After successfully running `sudo make install`, you can capture an image from the camera using the following steps:
+
+### 1. Capture RAW10 Image
+Execute the following command to capture a RAW10 format image:
+```bash
+media-ctl -d /dev/media0 --set-v4l2 '"xlnx-imx219 6-0010":0[fmt:SRGGB10_1X10/1920x1080 field:none]'
+media-ctl -d /dev/media0 --set-v4l2 '"a0030000.mipi_rx_to_video":0[fmt:SRGGB10_1X10/1920x1080 field:none]'
+media-ctl -d /dev/media0 --set-v4l2 '"a0030000.mipi_rx_to_video":1[fmt:SRGGB10_1X10/1920x1080 field:none]'
+media-ctl -d /dev/media0 --set-v4l2 '"axi:camif_rpi_axis_subsetconv":0[fmt:SRGGB10_1X10/1920x1080 field:none]'
+media-ctl -d /dev/media0 --set-v4l2 '"axi:camif_rpi_axis_subsetconv":1[fmt:Y10_1X10/1920x1080 field:none]'
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=1920,height=1080,pixelformat=XY10,bytesperline=2560 --stream-mmap=3 --stream-skip=30 --stream-count=1 --stream-poll --stream-to=camera.raw10
+```
+This will generate a raw image file (`camera.raw10` by default) in XY10 format.
+
+### 2. Convert and View Image
+Use the provided `parse_raw10.py` script to convert the RAW10 file to viewable PNG format:
+```bash
+python3 parse_raw10.py
+```
+This will:
+1. Process the RAW10 image and display both RAW and demosaiced RGB versions
+2. Save two output files:
+   - `raw8.png`: Processed 8-bit grayscale image
+   - `rgb.png`: Demosaiced color image
+
+> **Note:** The script requires:
+> - Python 3
+> - OpenCV (`opencv-python`)
+> - NumPy
+> - Matplotlib
+>
+> Install dependencies with:
+> ```
+> pip3 install numpy opencv-python matplotlib
+> ```
+> 
+>**Important:** Before running:
+> 1. Modify `width` and `height` variables in the script to match your camera resolution
+> 2. Adjust `raw_file` variable if using a different input filename
+
+---
+
+
 ## *How to Obtain Kernel Headers*
 
 There are two main ways to get the kernel headers:

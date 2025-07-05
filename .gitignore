@@ -6,3 +6,6 @@ Linux_drivers/*.mod*
 Linux_drivers/*.dtbo
 Linux_drivers/Module.symvers
 Linux_drivers/modules.order
+Linux_drivers/*.png
+Linux_drivers/*.raw
+Linux_drivers/*.raw10
