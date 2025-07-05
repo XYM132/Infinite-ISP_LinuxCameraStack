@@ -21,6 +21,7 @@ obj-m := xil-isp-lite.o
 obj-m += xil-vip.o
 obj-m += mipi-rx-to-video.o
 obj-m += ar1335.o
+obj-m += xlnx_imx219.o
 
 # Device Tree files
 DTS_FILE := pl.dtsi
@@ -56,6 +57,7 @@ install_modules: modules
 	insmod xil-vip.ko
 	insmod mipi-rx-to-video.ko
 	insmod ar1335.ko
+	insmod xlnx_imx219.ko
 
 install_dtbo: dtbo
 	-rmdir /sys/kernel/config/device-tree/overlays/*
