@@ -185,12 +185,6 @@ static int isp_config_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
     case V4L2_CID_USER_XIL_ISP_LITE_2DNR:
         ret = isp_get__2dnr(isp, (struct REG_2DNR *)ctrl->p_new.p_u8);
         break;
-	case V4L2_CID_USER_READ_CSR:
-		{
-			struct xil_isp_reg *reg = ctrl->p_new.p;
-			reg->val = ioread32(isp->isp_base + (reg->reg & 0xffff));
-			return 0;
-		}
     default:
         ret = -EINVAL;
         break;
