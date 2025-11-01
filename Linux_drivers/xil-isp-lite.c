@@ -82,7 +82,10 @@ struct isp_state {
 
     struct dentry *debug_dir;
     u32 debug_reg_offset;
+	u8 is_lut;
     spinlock_t reg_lock;
+
+	int irq;
 };
 
 #define DEFINE_ISP_GET_FUNC(module, reg_name) \
@@ -682,6 +685,8 @@ static int isp_start_stream(struct isp_state *isp)
 	isp->int_status = 0;
 	isp->streaming = true;
 
+	enable_irq(isp->irq);
+
 	return 0;
 }
 
@@ -690,6 +695,8 @@ static void isp_stop_stream(struct isp_state *isp)
 	INFINITE_ISP_WRITE_REG(isp->isp_base, config, RESET, 1);
 	INFINITE_ISP_WRITE_REG(isp->isp_base, config, INT_MASK, 0);
 	INFINITE_ISP_WRITE_REG(isp->isp_base, config, INT_STATUS, 0);
+
+	disable_irq(isp->irq);
 
 	isp->streaming = false;
 }
@@ -713,25 +720,28 @@ static irqreturn_t isp_irq_handler(int irq, void *data)
 	status = INFINITE_ISP_READ_REG(isp->isp_base, config, INT_STATUS);
 	INFINITE_ISP_WRITE_REG(isp->isp_base, config, INT_STATUS, 0);
 
+	if (!status) {
+		return IRQ_NONE;
+	}
 	pr_info("IRQ status %08X", status);
 
-	if (status & ISP_REG_INT_STATUS_BIT_FRAME_START) {
-		//dev_info(dev, "IRQ FRAME_START");
-		isp_queue_event_frame_sync(isp, isp->frame_sequence);
-		isp->int_status = ISP_REG_INT_STATUS_BIT_FRAME_START;
-		return IRQ_HANDLED;
-	}
+	// if (status & ISP_REG_INT_STATUS_BIT_FRAME_START) {
+	// 	//dev_info(dev, "IRQ FRAME_START");
+	// 	isp_queue_event_frame_sync(isp, isp->frame_sequence);
+	// 	isp->int_status = ISP_REG_INT_STATUS_BIT_FRAME_START;
+	// 	return IRQ_HANDLED;
+	// }
 
-	isp->int_status |= status;
-	done_mask  = ISP_REG_INT_STATUS_BIT_FRAME_START | ISP_REG_INT_STATUS_BIT_FRAME_DONE;
-	//done_mask |= ISP_REG_INT_STATUS_BIT_AE_DONE | ISP_REG_INT_STATUS_BIT_AWB_DONE;
+	// isp->int_status |= status;
+	// done_mask  = ISP_REG_INT_STATUS_BIT_FRAME_START | ISP_REG_INT_STATUS_BIT_FRAME_DONE;
+	// //done_mask |= ISP_REG_INT_STATUS_BIT_AE_DONE | ISP_REG_INT_STATUS_BIT_AWB_DONE;
 
-	if ((isp->int_status & done_mask) == done_mask) {
-		//dev_info(dev, "Statistics done");
-		isp_stat_send_measurement(&isp->stat_node);
-		isp->frame_sequence ++;
-		isp->int_status = 0;
-	}
+	// if ((isp->int_status & done_mask) == done_mask) {
+	// 	//dev_info(dev, "Statistics done");
+	// 	isp_stat_send_measurement(&isp->stat_node);
+	// 	isp->frame_sequence ++;
+	// 	isp->int_status = 0;
+	// }
 
 	return IRQ_HANDLED;
 }
@@ -741,6 +751,7 @@ static int isp_s_stream(struct v4l2_subdev *sd, int enable)
 	struct isp_state *isp = to_ispstate(sd);
 	int ret = 0;
 
+	dev_info(isp->dev, "ISP %s streaming", enable ? "enable" : "disable");
 	mutex_lock(&isp->lock);
 
 	if (enable == isp->streaming) {
@@ -1222,6 +1233,7 @@ static void isp_init_bnr(struct REG_Infinite_ISP* infinite_isp_reg)
 	infinite_isp_reg->bnr.bnr_color_curve_y_b_8 = bnr_cc_yb[8];
 }
 
+#include <linux/delay.h>
 static int isp_initialize_hw(struct isp_state *isp)
 {
 	struct REG_Infinite_ISP *infinite_isp_reg;
@@ -1236,7 +1248,9 @@ static int isp_initialize_hw(struct isp_state *isp)
 		return -ENOMEM;
 	}
 
-	unsigned i;           
+	INFINITE_ISP_WRITE_REG(isp->isp_base, config, RESET, 1);
+
+	msleep_interruptible(100);
 
 	infinite_isp_reg->config.TOP_EN.TOP_EN_DPC_EN = DPC_EN;
 	infinite_isp_reg->config.TOP_EN.TOP_EN_BLC_EN = BLC_EN;
@@ -1373,10 +1387,7 @@ static int isp_initialize_hw(struct isp_state *isp)
 	memcpy(infinite_isp_lut->oecf_luts.OECF_B_LUT, oecf_table, sizeof(oecf_table));
 
 	memcpy(infinite_isp_lut->vip1_osd_ram.VIP1_OSD_RAM, osd_bitmap_128x32, sizeof(osd_bitmap_128x32));
-	
-	INFINITE_ISP_WRITE_REG(isp->isp_base, config, RESET, 1);
-	INFINITE_ISP_WRITE_REG(isp->isp_base, config, RESET, 0);
-	INFINITE_ISP_WRITE_REG(isp->isp_base, config, INT_MASK, ~0U);   
+	memcpy(infinite_isp_lut->vip2_osd_ram.VIP2_OSD_RAM, osd_bitmap_128x32, sizeof(osd_bitmap_128x32));
 
 	INFINITE_ISP_WRITE_REG(isp->isp_base, config, TOP_EN, infinite_isp_reg->config.TOP_EN.TOP_EN_val);
 	INFINITE_ISP_WRITE_MODULE_REGs(isp->isp_base, dpc, &infinite_isp_reg->dpc);
@@ -1394,6 +1405,10 @@ static int isp_initialize_hw(struct isp_state *isp)
 	INFINITE_ISP_WRITE_LUT_REGs(isp->luts_base, gamma_lut, &infinite_isp_lut->gamma_lut);
 	INFINITE_ISP_WRITE_LUT_REGs(isp->luts_base, oecf_luts, &infinite_isp_lut->oecf_luts);
 	INFINITE_ISP_WRITE_LUT_REGs(isp->luts_base, vip1_osd_ram, &infinite_isp_lut->vip1_osd_ram);
+	INFINITE_ISP_WRITE_LUT_REGs(isp->luts_base, vip2_osd_ram, &infinite_isp_lut->vip2_osd_ram);
+	
+	INFINITE_ISP_WRITE_REG(isp->isp_base, config, RESET, 0);
+	INFINITE_ISP_WRITE_REG(isp->isp_base, config, INT_MASK, ~0U);
 
 	kfree(infinite_isp_lut);
 	kfree(infinite_isp_reg);
@@ -1429,7 +1444,37 @@ static ssize_t offset_write(struct file *file, const char __user *user_buf,
         return -EINVAL;
 
     isp->debug_reg_offset = offset;
+	isp->is_lut = 0;
 	pr_info("set debug_reg_offset: 0x%x", offset);
+    return count;
+}
+
+static ssize_t vip_offset_write(struct file *file, const char __user *user_buf,
+                          size_t count, loff_t *ppos)
+{
+    struct isp_state *isp = file->private_data;
+    char buf[16];
+    unsigned long offset;
+    int ret;
+
+    if (count >= sizeof(buf))
+        return -EINVAL;
+
+    if (copy_from_user(buf, user_buf, count))
+        return -EFAULT;
+
+    buf[count] = '\0';
+
+    ret = kstrtoul(buf, 0, &offset);
+    if (ret)
+        return ret;
+
+    if (offset > 0xffff)
+        return -EINVAL;
+
+    isp->debug_reg_offset = offset;
+	isp->is_lut = 1;
+	pr_info("set lut debug_reg_offset: 0x%x", offset);
     return count;
 }
 
@@ -1438,13 +1483,27 @@ static ssize_t offset_read(struct file *file, char __user *user_buf,
 {
     struct isp_state *isp = file->private_data;
     char buf[30];
+	void* base = isp->is_lut ? isp->luts_base : isp->isp_base;
+	unsigned int module_offset = isp->is_lut ? 0x8000 : 0;
+	unsigned long max_offset = isp->is_lut ? 0x17FFC : 0x2BFC;
     int len;
+	int i = 0;
 
     if (*ppos > 0)
         return 0;
 
-    len = snprintf(buf, sizeof(buf), "0x%08x : 0x%08x\n", isp->debug_reg_offset, ioread32(isp->isp_base + isp->debug_reg_offset));
-    
+	if (isp->debug_reg_offset == 0xffff) {
+		pr_info("dump isp debug %s registers", isp->is_lut ? "luts" : "isp");
+		for (; i < max_offset; i+=4 * 4) {
+			pr_info("0x%04x : 0x%08x 0x%08x 0x%08x 0x%08x", i + module_offset, 
+				ioread32(base + i),
+				ioread32(base + i + 4),
+				ioread32(base + i + 8),
+				ioread32(base + i + 12));
+		}
+		len = snprintf(buf, sizeof(buf), "dump done\n");
+	} else
+    	len = snprintf(buf, sizeof(buf), "0x%08x : 0x%08x\n", isp->debug_reg_offset, ioread32(base + isp->debug_reg_offset));    
     if (copy_to_user(user_buf, buf, len))
         return -EFAULT;
 
@@ -1459,13 +1518,20 @@ static const struct file_operations offset_fops = {
     .llseek = default_llseek,
 };
 
+static const struct file_operations lut_offset_fops = {
+    .open = simple_open,
+    .read = offset_read,
+    .write = vip_offset_write,
+    .llseek = default_llseek,
+};
+
 static int isp_probe(struct platform_device *pdev)
 {
 	struct v4l2_subdev *subdev;
 	struct isp_state *isp;
 	int num_clks = ARRAY_SIZE(isp_clks);
 	struct device *dev = &pdev->dev;
-	int irq, ret;
+	int ret;
 
 	isp = devm_kzalloc(dev, sizeof(*isp), GFP_KERNEL);
 	if (!isp) {
@@ -1495,13 +1561,13 @@ static int isp_probe(struct platform_device *pdev)
         return ret;
     }
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	isp->irq = platform_get_irq(pdev, 0);
+	if (isp->irq < 0) {
 		dev_err(dev, "No irq resource in DT");
-		return irq;
+		return isp->irq;
 	}
 
-	ret = devm_request_threaded_irq(dev, irq, NULL,
+	ret = devm_request_threaded_irq(dev, isp->irq, NULL,
 					isp_irq_handler, IRQF_ONESHOT,
 					dev_name(dev), isp);
 	if (ret) {
@@ -1580,6 +1646,7 @@ static int isp_probe(struct platform_device *pdev)
         dev_err(&pdev->dev, "Failed to create debugfs directory\n");
     }
 	debugfs_create_file("reg_offset", 0644, isp->debug_dir, isp, &offset_fops);
+	debugfs_create_file("luts_reg_offset", 0644, isp->debug_dir, isp, &lut_offset_fops);
 	dev_info(dev, ISP_DRIVER_NAME " driver probed!");
 
 	return 0;
@@ -1600,6 +1667,10 @@ static int isp_remove(struct platform_device *pdev)
 	media_entity_cleanup(&subdev->entity);
 	mutex_destroy(&isp->lock);
 	clk_bulk_disable_unprepare(num_clks, isp->clks);
+    if (isp->debug_dir) {
+        debugfs_remove_recursive(isp->debug_dir);
+        isp->debug_dir = NULL;
+    }
 
 	return 0;
 }

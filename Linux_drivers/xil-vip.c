@@ -18,6 +18,7 @@
 #include <media/v4l2-event.h>
 #include "infinite_isp_register.h"
 #include "linux/isp_init.h"
+#include <linux/debugfs.h>
 
 /* Register register map */
 
@@ -57,6 +58,12 @@ struct vip_state {
 	struct mutex lock;
 	struct media_pad pads[VIP_MEDIA_PADS];
 	bool streaming;
+
+    struct dentry *debug_dir;
+    u32 debug_reg_offset;	
+	char dir_name[32];
+    spinlock_t reg_lock;
+	resource_size_t phys_addr;
 };
 
 static inline struct vip_state *
@@ -171,9 +178,9 @@ static int vip_start_stream(struct vip_state *vip)
 
 static void vip_stop_stream(struct vip_state *vip)
 {
-	// vip_write(vip, VIP_REG_RESET, 1);
-	// vip_write(vip, VIP_REG_INT_MASK, ~0U);
-	// vip_write(vip, VIP_REG_INT_STATUS, 0);
+	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_RESET, 1);
+	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_INT_MASK, 0);
+	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_INT_STATUS, 0);
 
 	vip->streaming = false;
 }
@@ -540,7 +547,7 @@ static void isp_vip_init(struct REG_Infinite_ISP_VIP* infinite_isp_vip)
 		infinite_isp_vip->vip_config.VIP_TOP_EN.VIP_TOP_EN_RGBC_EN = 1;
 	}
 	if(IRC_EN){
-		infinite_isp_vip->vip_config.VIP_TOP_EN.VIP_TOP_EN_IRC_EN = 1;
+		infinite_isp_vip->vip_config.VIP_TOP_EN.VIP_TOP_EN_IRC_EN = 0;
 	}
 	if(SCALE_EN){
 		infinite_isp_vip->vip_config.VIP_TOP_EN.VIP_TOP_EN_SCALE_EN = 1;
@@ -599,27 +606,97 @@ static int vip_initialize_hw(struct vip_state *vip)
 		return -ENOMEM;
 	}
 
-	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_RESET, 1);
 
 	isp_vip_init(infinite_isp_vip);
+	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_RESET, 1);
 
-	INFINITE_ISP_WRITE_VIP_REGs(vip->iomem, vip_config, &infinite_isp_vip->vip_config);
+	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_BITS, 8);
+	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_TOP_EN, infinite_isp_vip->vip_config.VIP_TOP_EN.VIP_TOP_EN_val);
 	INFINITE_ISP_WRITE_VIP_REGs(vip->iomem, rgbc, &infinite_isp_vip->rgbc);
 	INFINITE_ISP_WRITE_VIP_REGs(vip->iomem, irc, &infinite_isp_vip->irc);
 	INFINITE_ISP_WRITE_VIP_REGs(vip->iomem, scale, &infinite_isp_vip->scale);
 	INFINITE_ISP_WRITE_VIP_REGs(vip->iomem, yuvconvformat, &infinite_isp_vip->yuvconvformat);
 	INFINITE_ISP_WRITE_VIP_REGs(vip->iomem, osd, &infinite_isp_vip->osd);
 	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_RESET, 0);
+	INFINITE_ISP_VIP_WRITE_REG(vip->iomem, vip_config, VIP_INT_MASK, 0);
 
 	return 0;
 }
 
+
+static ssize_t offset_write(struct file *file, const char __user *user_buf,
+                          size_t count, loff_t *ppos)
+{
+    struct vip_state *isp = file->private_data;
+    char buf[16];
+    unsigned long offset;
+    int ret;
+
+    if (count >= sizeof(buf))
+        return -EINVAL;
+
+    if (copy_from_user(buf, user_buf, count))
+        return -EFAULT;
+
+    buf[count] = '\0';
+
+    ret = kstrtoul(buf, 0, &offset);
+    if (ret)
+        return ret;
+
+    if (offset > 0xffff)
+        return -EINVAL;
+
+    isp->debug_reg_offset = offset;
+	pr_info("set debug_reg_offset: 0x%x", offset);
+    return count;
+}
+
+static ssize_t offset_read(struct file *file, char __user *user_buf,
+                         size_t count, loff_t *ppos)
+{
+    struct vip_state *isp = file->private_data;
+    char buf[30];
+    int len;
+	int i = 0;
+
+    if (*ppos > 0)
+        return 0;
+
+	if (isp->debug_reg_offset == 0xffff) {
+		pr_info("dump isp debug %s registers", isp->dir_name);
+		for (; i < 0xB00; i+=4 * 4) {
+			pr_info("0x%08x : 0x%08x 0x%08x 0x%08x 0x%08x", i + (unsigned int)isp->phys_addr - 0xa0060000, 
+				ioread32(isp->iomem + i),
+				ioread32(isp->iomem + i + 4),
+				ioread32(isp->iomem + i + 8),
+				ioread32(isp->iomem + i + 12));
+		}
+		len = snprintf(buf, sizeof(buf), "dump done\n");
+	} else
+    	len = snprintf(buf, sizeof(buf), "0x%08x : 0x%08x\n", isp->debug_reg_offset, ioread32(isp->iomem + isp->debug_reg_offset));
+    
+    if (copy_to_user(user_buf, buf, len))
+        return -EFAULT;
+
+    *ppos = len;
+    return len;
+}
+
+static const struct file_operations offset_fops = {
+    .open = simple_open,
+    .read = offset_read,
+    .write = offset_write,
+    .llseek = default_llseek,
+};
 static int vip_probe(struct platform_device *pdev)
 {
 	struct v4l2_subdev *subdev;
 	struct vip_state *vip;
 	struct device *dev = &pdev->dev;
 	int irq, ret;
+	static int debug_dir_index = 0;
+	struct resource *res;
 
 	vip = devm_kzalloc(dev, sizeof(*vip), GFP_KERNEL);
 	if (!vip) {
@@ -629,9 +706,17 @@ static int vip_probe(struct platform_device *pdev)
 
 	vip->dev = dev;
 
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
+		dev_err(&pdev->dev, "Failed to get memory resource\n");
+		return -ENXIO;
+	}
+
+	vip->phys_addr = res->start;
+	dev_info(&pdev->dev, "VIP physical address: 0x%pa\n", &vip->phys_addr);
+
 	vip->iomem = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(vip->iomem)) {
-		dev_err(dev, "No iomem resource in DT");
 		return PTR_ERR(vip->iomem);
 	}
 
@@ -678,6 +763,12 @@ static int vip_probe(struct platform_device *pdev)
 	}
 
 	dev_info(dev, "xil-vip driver probed!");
+	snprintf(vip->dir_name, sizeof(vip->dir_name), "xil_isp_vip%d", debug_dir_index++);
+    vip->debug_dir = debugfs_create_dir(vip->dir_name, NULL);
+    if (!vip->debug_dir) {
+        dev_err(&pdev->dev, "Failed to create debugfs directory\n");
+    }
+	debugfs_create_file("reg_offset", 0644, vip->debug_dir, vip, &offset_fops);
 
 	return 0;
 error:
