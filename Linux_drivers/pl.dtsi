@@ -13,7 +13,7 @@
 		overlay0: __overlay__ {
 			#address-cells = <2>;
 			#size-cells = <2>;
-			firmware-name = "design_1_wrapper.bit.bin";
+			firmware-name = "design_1_wrapper_imx219.bin";
 			resets = <&zynqmp_reset 116>;
 		};
 	};
@@ -409,7 +409,7 @@
 			isp_pipe_vip_1: xil_vip@a0064000 {
 				/* This is a place holder node for a custom IP, user may need to update the entries */
 				compatible = "xlnx,xil-vip-1.0";
-				reg = <0x0 0xa0064000 0x0 0x7fc>;
+				reg = <0x0 0xa0064000 0x0 0xbfc>;
 				xlnx,s00-axi-addr-width = <0xc>;
 				xlnx,s00-axi-data-width = <0x20>;
 				ports {
@@ -434,7 +434,7 @@
 			isp_pipe_vip_2: xil_vip@a0066000 {
 				/* This is a place holder node for a custom IP, user may need to update the entries */
 				compatible = "xlnx,xil-vip-1.0";
-				reg = <0x0 0xa0066000 0x0 0x7fc>;
+				reg = <0x0 0xa0066000 0x0 0xbfc>;
 				xlnx,s00-axi-addr-width = <0xc>;
 				xlnx,s00-axi-data-width = <0x20>;
 				ports {

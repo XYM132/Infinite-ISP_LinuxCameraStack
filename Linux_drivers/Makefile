@@ -28,7 +28,7 @@ DTS_FILE := pl.dtsi
 DTBO_FILE := $(DTS_FILE:.dtsi=.dtbo)
 DTC_FLAGS ?= -@ -O dtb
 
-BIT_STREAM_FILE := design_1_wrapper.bit.bin
+BIT_STREAM_FILE := design_1_wrapper_imx219.bin
 
 # Default target
 all: modules dtbo

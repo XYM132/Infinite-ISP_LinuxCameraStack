@@ -1028,17 +1028,15 @@ struct REG_Reserved_4 {
 };
 
 struct REG_GAMMA_LUT {
-    uint32_t GAMMA_LUT[4096];
+    uint32_t GAMMA_LUT[1024];
 };
 
 struct REG_VIP1_OSD_RAM {
-    uint32_t VIP1_OSD_RAM[512];
-    uint32_t reserved_44[1536];
+    uint32_t VIP1_OSD_RAM[256];
 };
 
 struct REG_VIP2_OSD_RAM {
-    uint32_t VIP2_OSD_RAM[512];
-    uint32_t reserved_45[1536];
+    uint32_t VIP2_OSD_RAM[256];
 };
 
 struct REG_OECF_LUTs {
@@ -1082,8 +1080,11 @@ struct REG_Infinite_ISP_VIP {
 
 struct REG_Infinite_ISP_LUT {
     struct REG_GAMMA_LUT gamma_lut;
+    uint32_t reserved_36[3072];
     struct REG_VIP1_OSD_RAM vip1_osd_ram;
+    uint32_t reserved_44[1792];
     struct REG_VIP2_OSD_RAM vip2_osd_ram;
+    uint32_t reserved_45[1792];
     struct REG_OECF_LUTs oecf_luts;
 };
 
@@ -1099,16 +1100,32 @@ struct REG_Infinite_ISP_LUT {
 #define INFINITE_ISP_VIP_WRITE_REG(iommu, module_name, register_name, value) \
     iowrite32((value), &((volatile struct REG_Infinite_ISP_VIP __iomem *)(iommu))->module_name.register_name)
 
-#define INFINITE_MODE_READ_MODULE_REGs(iommu, struct_name, module_name, buffer) \
-    memcpy_fromio(buffer, \
-        (void __iomem *)((char __iomem *)(iommu) + offsetof(struct struct_name, module_name)), \
-        sizeof(((struct struct_name *)0)->module_name))
+#define INFINITE_MODE_READ_MODULE_REGs(iommu, struct_name, module_name, buffer)               \
+    do {                                                                                      \
+        BUILD_BUG_ON(sizeof(((struct struct_name *)0)->module_name) % 4 != 0);                \
+        void __iomem *__src =                                                                 \
+            (void __iomem *)((char __iomem *)(iommu) +                                        \
+                             offsetof(struct struct_name, module_name));                      \
+        u32 *__dst = (u32 *)(buffer);                                                         \
+        size_t __count = sizeof(((struct struct_name *)0)->module_name) / sizeof(u32);        \
+        size_t __i;                                                                           \
+        for (__i = 0; __i < __count; __i++)                                                   \
+            __dst[__i] = ioread32((void __iomem *)((char __iomem *)__src + __i * 4));         \
+    } while (0)
 
-#define INFINITE_MODE_WRITE_MODULE_REGs(iommu, struct_name, module_name, buffer) \
-    memcpy_toio( \
-        (void __iomem *)((char __iomem *)(iommu) + offsetof(struct struct_name, module_name)), \
-        buffer, \
-        sizeof(((struct struct_name *)0)->module_name))
+
+#define INFINITE_MODE_WRITE_MODULE_REGs(iommu, struct_name, module_name, buffer)      \
+    do {                                                                                      \
+        void __iomem *__dst =                                                                 \
+            (void __iomem *)((char __iomem *)(iommu) +                                        \
+                             offsetof(struct struct_name, module_name));                      \
+        const u32 *__src = (const u32 *)(buffer);                                             \
+        size_t __count = sizeof(((struct struct_name *)0)->module_name) / sizeof(u32);        \
+        size_t __i;                                                                           \
+        for (__i = 0; __i < __count; __i++)                                                   \
+            iowrite32(__src[__i], (void __iomem *)((char __iomem *)__dst + __i * 4));    \
+    } while (0)
+
 
 #define INFINITE_ISP_READ_MODULE_REGs(iommu, module_name, buffer) \
 	INFINITE_MODE_READ_MODULE_REGs(iommu, REG_Infinite_ISP, module_name, buffer)
