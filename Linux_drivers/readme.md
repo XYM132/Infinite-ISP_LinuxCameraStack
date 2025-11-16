@@ -77,12 +77,12 @@ After successfully running `sudo make install`, you can capture an image from th
 ### 1. Capture RAW10 Image
 Execute the following command to capture a RAW10 format image:
 ```bash
-media-ctl -d /dev/media0 --set-v4l2 '"xlnx-imx219 6-0010":0[fmt:SRGGB10_1X10/1920x1080 field:none]'
-media-ctl -d /dev/media0 --set-v4l2 '"a0030000.mipi_rx_to_video":0[fmt:SRGGB10_1X10/1920x1080 field:none]'
-media-ctl -d /dev/media0 --set-v4l2 '"a0030000.mipi_rx_to_video":1[fmt:SRGGB10_1X10/1920x1080 field:none]'
-media-ctl -d /dev/media0 --set-v4l2 '"axi:camif_rpi_axis_subsetconv":0[fmt:SRGGB10_1X10/1920x1080 field:none]'
-media-ctl -d /dev/media0 --set-v4l2 '"axi:camif_rpi_axis_subsetconv":1[fmt:Y10_1X10/1920x1080 field:none]'
-v4l2-ctl -d /dev/video0 --set-fmt-video=width=1920,height=1080,pixelformat=XY10,bytesperline=2560 --stream-mmap=3 --stream-skip=30 --stream-count=1 --stream-poll --stream-to=camera.raw10
+media-ctl -d /dev/media1 --set-v4l2 '"xlnx-imx219 6-0010":0[fmt:SRGGB10_1X10/1992x1152 field:none]'
+media-ctl -d /dev/media1 --set-v4l2 '"a0030000.mipi_rx_to_video":0[fmt:SRGGB10_1X10/1992x1152 field:none]'
+media-ctl -d /dev/media1 --set-v4l2 '"a0030000.mipi_rx_to_video":1[fmt:SRGGB10_1X10/1992x1152 field:none]'
+media-ctl -d /dev/media1 --set-v4l2 '"axi:camif_rpi_axis_subsetconv":0[fmt:SRGGB10_1X10/1992x1152 field:none]'
+media-ctl -d /dev/media1 --set-v4l2 '"axi:camif_rpi_axis_subsetconv":1[fmt:Y10_1X10/1992x1152 field:none]'
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=1992,height=1152,pixelformat=XY10,bytesperline=2656 --stream-mmap=3 --stream-skip=30 --stream-count=1 --stream-poll --stream-to=camera.raw10
 ```
 This will generate a raw image file (`camera.raw10` by default) in XY10 format.
 

@@ -124,8 +124,8 @@ def display_with_plt(raw_file, width, height):
 # Usage example
 if __name__ == "__main__":
     # Modify these parameters according to actual situation
-    width = 1920    # Image width
-    height = 1080   # Image height
+    width = 1992    # Image width
+    height = 1152   # Image height
     raw_file = "camera.raw10"  # XY10 format RAW file
     
     display_with_plt(raw_file, width, height)
