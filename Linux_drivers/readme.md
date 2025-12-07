@@ -114,6 +114,23 @@ This will:
 
 ---
 
+## ISP Pipeline Test Application (OpenCV)
+A C++ test application based on OpenCV has been implemented. This application supports continuous frame acquisition from the ISP output and validates the complete user-space data path.
+
+### Build Dependencies
+```sh
+sudo apt update
+sudo apt install libopencv-dev
+```
+
+### Build and Run
+```sh
+cd Linux_drivers/test
+mkdir build
+cd build
+cmake .. && make
+./isp_pipeline
+```
 
 ## *How to Obtain Kernel Headers*
 
