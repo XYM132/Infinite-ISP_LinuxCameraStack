@@ -9,3 +9,4 @@ Linux_drivers/modules.order
 Linux_drivers/*.png
 Linux_drivers/*.raw
 Linux_drivers/*.raw10
+Linux_drivers/test/build*/
