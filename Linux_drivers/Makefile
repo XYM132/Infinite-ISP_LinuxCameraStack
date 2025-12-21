@@ -24,11 +24,11 @@ obj-m += ar1335.o
 obj-m += xlnx_imx219.o
 
 # Device Tree files
-DTS_FILE := pl.dtsi
+DTS_FILE := infinite_isp.dtsi
 DTBO_FILE := $(DTS_FILE:.dtsi=.dtbo)
 DTC_FLAGS ?= -@ -O dtb
 
-BIT_STREAM_FILE := design_1_wrapper_imx219.bin
+BIT_STREAM_FILE ?= design_1_wrapper_imx219.bin
 
 # Default target
 all: modules dtbo
@@ -39,18 +39,22 @@ modules:
 	CONFIG_MODULE_SIG=y EXTRA_CFLAGS="-I$(PWD)" modules
 
 # Compile device tree
-dtbo: $(DTBO_FILE)
+dtbo: check_bitstream $(DTBO_FILE)
 
-$(DTBO_FILE): $(DTS_FILE)
-	dtc $(DTC_FLAGS) -o $@ $<
+infinite_isp-overlay.dts: dts/$(DTS_FILE)
+	sed 's|@BIT_STREAM_FILE@|$(BIT_STREAM_FILE)|g' $< > dts/$@
+
+$(DTBO_FILE): infinite_isp-overlay.dts
+	dtc $(DTC_FLAGS) -o dts/$@ dts/$<
 
 # Clean everything
 clean:
 	$(MAKE) -C $(KERNEL_DIR) M=$(PWD) clean
 	rm -f *.dtbo
+	rm -f dts/infinite_isp-overlay.dts infinite_isp.dtbo
 
 # Installation targets (ARM64 only)
-install: check_arch install_bitstream install_modules install_dtbo
+install: check_arch check_bitstream install_bitstream install_modules install_dtbo
 
 install_modules: modules
 	insmod xil-isp-lite.ko
@@ -63,10 +67,10 @@ install_dtbo: dtbo
 	-rmdir /sys/kernel/config/device-tree/overlays/*
 	mkdir /sys/kernel/config/device-tree/overlays/Infinite_ISP
 	echo 0 > /sys/class/fpga_manager/fpga0/flags
-	cat $(DTBO_FILE) > /sys/kernel/config/device-tree/overlays/Infinite_ISP/dtbo
+	cat dts/$(DTBO_FILE) > /sys/kernel/config/device-tree/overlays/Infinite_ISP/dtbo
 
-install_bitstream: $(BIT_STREAM_FILE)
-	install -C -m 644 $(BIT_STREAM_FILE) /lib/firmware/
+install_bitstream: check_bitstream bitstream/$(BIT_STREAM_FILE)
+	install -C -m 644 bitstream/$(BIT_STREAM_FILE) /lib/firmware/
 
 uninstall: check_arch
 	rmmod xil-isp-lite xil-vip mipi-rx-to-video ar1335 || true
@@ -84,6 +88,11 @@ endif
 check_arch:
 ifneq ($(UNAME_M),aarch64)
 	$(error This target can only be run on aarch64 architecture)
+endif
+
+check_bitstream:
+ifeq ($(wildcard bitstream/$(BIT_STREAM_FILE)),)
+	$(error BIT_STREAM_FILE not found: bitstream/$(BIT_STREAM_FILE))
 endif
 
 .PHONY: all modules dtbo clean install install_modules install_dtbo install_bitstream uninstall check_arch check_root
